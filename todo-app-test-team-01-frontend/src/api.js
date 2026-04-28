@@ -19,8 +19,19 @@ export async function fetchTodos() {
 // Should return the created todo
 // ============================================================
 export async function createTodo(title) {
-  // TODO: implement
-  throw new Error('createTodo not implemented');
+   const res = await fetch(`${API_BASE}/todos/create`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ title }),
+  });
+
+  if (!res.ok) {
+    throw new Error('Failed to create todo');
+  }
+
+  return res.json();
 }
 
 // ============================================================
@@ -29,8 +40,19 @@ export async function createTodo(title) {
 // Should return the updated todo
 // ============================================================
 export async function updateTodo(id, updates) {
-  // TODO: implement
-  throw new Error('updateTodo not implemented');
+  const res = await fetch(`${API_BASE}/todos/update`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(updatedData),
+  });
+
+  if (!res.ok) {
+    throw new Error('Failed to update todo');
+  }
+
+  return res.json();
 }
 
 // ============================================================
@@ -38,6 +60,15 @@ export async function updateTodo(id, updates) {
 // Returns nothing on success
 // ============================================================
 export async function deleteTodo(id) {
-  // TODO: implement
-  throw new Error('deleteTodo not implemented');
+  const res = await fetch(`${API_BASE}/todos/delete`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ todoId: id }),
+  });
+
+  if (!res.ok) {
+    throw new Error('Failed to delete todo');
+  }
 }
