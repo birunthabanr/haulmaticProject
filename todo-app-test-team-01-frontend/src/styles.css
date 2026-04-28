@@ -1,0 +1,118 @@
+/* Basic styles for the todo app.
+   The .completed class is provided — apply it when a todo is complete. */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background: #f5f7fa;
+  color: #1a1a1a;
+  line-height: 1.5;
+}
+
+.container {
+  max-width: 600px;
+  margin: 40px auto;
+  padding: 24px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  margin: 0 0 24px 0;
+  color: #0a2540;
+}
+
+.create-section {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  padding: 12px;
+  background: #f8fafc;
+  border-radius: 6px;
+}
+
+.todo-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.todo-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #e0e6ed;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background: white;
+}
+
+/* Apply this class when a todo is completed */
+.todo-item.completed {
+  background: #f0fdf4;
+  border-color: #86efac;
+}
+
+.todo-item.completed .todo-title {
+  text-decoration: line-through;
+  color: #15803d;
+}
+
+.todo-title {
+  flex: 1;
+  font-size: 15px;
+}
+
+.edit-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid #94a3b8;
+  border-radius: 4px;
+  font-size: 15px;
+}
+
+.todo-actions {
+  display: flex;
+  gap: 6px;
+}
+
+button {
+  padding: 6px 12px;
+  border: 1px solid #cbd5e1;
+  background: white;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.15s;
+}
+
+button:hover:not(:disabled) {
+  background: #f1f5f9;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+input[type='text'] {
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 15px;
+  flex: 1;
+}
+
+.error {
+  color: #c53030;
+  padding: 12px;
+  background: #fef2f2;
+  border-radius: 4px;
+}
