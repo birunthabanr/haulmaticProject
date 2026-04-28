@@ -3,13 +3,27 @@
 
 const API_BASE = 'http://localhost:3001';
 
+function getAuthToken() {
+  return localStorage.getItem('authToken') || '';
+}
+
+function getAuthHeaders(includeJson = false) {
+  const token = getAuthToken();
+  return {
+    ...(includeJson ? { 'Content-Type': 'application/json' } : {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
 // ============================================================
 // ✅ Already implemented as a reference pattern
 // ============================================================
 export async function fetchTodos() {
-  const res = await fetch(`${API_BASE}/todos`);
+  const res = await fetch(`${API_BASE}/todos`, {
+    headers: getAuthHeaders(),
+  });
   if (!res.ok) {
-    throw new Error('Failed to fetch todos');
+    throw new Error(await readErrorMessage(res, 'Failed to fetch todos'));
   }
   return res.json();
 }
@@ -33,7 +47,7 @@ async function readErrorMessage(res, fallback) {
 export async function createTodo(title) {
   const res = await fetch(`${API_BASE}/todos`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(true),
     body: JSON.stringify({ title }),
   });
 
@@ -52,7 +66,7 @@ export async function createTodo(title) {
 export async function updateTodo(id, updates) {
   const res = await fetch(`${API_BASE}/todos/${id}`, {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers: getAuthHeaders(true),
     body: JSON.stringify(updates),
   });
 
@@ -70,9 +84,54 @@ export async function updateTodo(id, updates) {
 export async function deleteTodo(id) {
   const res = await fetch(`${API_BASE}/todos/${id}`, {
     method: 'DELETE',
+    headers: getAuthHeaders(),
   });
 
   if (!res.ok) {
     throw new Error(await readErrorMessage(res, 'Failed to delete todo'));
+  }
+}
+
+export async function signupUser({ username, password, role }) {
+  const res = await fetch(`${API_BASE}/auth/signup`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password, role }),
+  });
+  if (!res.ok) {
+    throw new Error(await readErrorMessage(res, 'Failed to sign up'));
+  }
+  return res.json();
+}
+
+export async function loginUser({ username, password }) {
+  const res = await fetch(`${API_BASE}/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  });
+  if (!res.ok) {
+    throw new Error(await readErrorMessage(res, 'Failed to login'));
+  }
+  return res.json();
+}
+
+export async function fetchMe() {
+  const res = await fetch(`${API_BASE}/auth/me`, {
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    throw new Error(await readErrorMessage(res, 'Failed to fetch current user'));
+  }
+  return res.json();
+}
+
+export async function logoutUser() {
+  const res = await fetch(`${API_BASE}/auth/logout`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
+  if (!res.ok) {
+    throw new Error(await readErrorMessage(res, 'Failed to logout'));
   }
 }

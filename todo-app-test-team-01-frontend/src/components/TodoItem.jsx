@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-export default function TodoItem({ todo, onUpdate, onDelete, isBusy = false }) {
+export default function TodoItem({ todo, onUpdate, onDelete, isBusy = false, canDelete = false }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(todo.title);
 
@@ -49,10 +49,11 @@ export default function TodoItem({ todo, onUpdate, onDelete, isBusy = false }) {
       )}
 
       <div className="todo-actions">
-        <button onClick={toggleComplete} disabled={isBusy}>
+        <button className="btn btn-muted" onClick={toggleComplete} disabled={isBusy}>
           {todo.completed ? 'Undo' : 'Complete'}
         </button>
         <button
+          className="btn btn-muted"
           onClick={() => {
             if (!isEditing) {
               setIsEditing(true);
@@ -64,7 +65,7 @@ export default function TodoItem({ todo, onUpdate, onDelete, isBusy = false }) {
         >
           {isEditing ? 'Save' : 'Edit'}
         </button>
-        <button onClick={remove} disabled={isBusy}>Delete</button>
+        {canDelete ? <button className="btn btn-danger" onClick={remove} disabled={isBusy}>Delete</button> : null}
       </div>
     </li>
   );

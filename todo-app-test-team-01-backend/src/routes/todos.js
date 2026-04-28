@@ -1,7 +1,11 @@
 const express = require('express');
 const store = require('../store');
+const { authenticate, authorize } = require('../auth');
 
 const router = express.Router();
+
+// Require auth for all /todos endpoints
+router.use(authenticate);
 
 function parseId(raw) {
   const id = Number(raw);
@@ -89,7 +93,7 @@ router.patch('/:id', (req, res) => {
 // ============================================================
 // DELETE /todos/:id — Remove a todo
 // ============================================================
-router.delete('/:id', (req, res) => {
+router.delete('/:id', authorize(['admin']), (req, res) => {
   const id = parseId(req.params.id);
   if (!id) return res.status(400).json({ error: 'Invalid id' });
 
