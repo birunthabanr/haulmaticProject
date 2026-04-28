@@ -19,6 +19,14 @@ function normalizeAndValidateTitle(title) {
   return { ok: true, value: trimmed };
 }
 
+function parseSubtasksInput(raw) {
+  return String(raw || '')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((text, index) => ({ id: index + 1, text, completed: false }));
+}
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
@@ -34,6 +42,9 @@ export default function App() {
   const [error, setError] = useState(null);
   const [actionError, setActionError] = useState(null);
   const [newTitle, setNewTitle] = useState('');
+  const [newBody, setNewBody] = useState('');
+  const [newDescription, setNewDescription] = useState('');
+  const [newSubtasksText, setNewSubtasksText] = useState('');
   const [isCreating, setIsCreating] = useState(false);
   const [pendingIds, setPendingIds] = useState(() => new Set());
 
@@ -81,7 +92,7 @@ export default function App() {
     });
   };
 
-  const handleCreate = async (title) => {
+  const handleCreate = async ({ title, body, description, subtasksText }) => {
     setActionError(null);
     const validated = normalizeAndValidateTitle(title);
     if (!validated.ok) {
@@ -92,9 +103,17 @@ export default function App() {
     if (isCreating) return;
     setIsCreating(true);
     try {
-      const created = await createTodo(validated.value);
+      const created = await createTodo({
+        title: validated.value,
+        body: String(body || '').trim(),
+        description: String(description || '').trim(),
+        subtasks: parseSubtasksInput(subtasksText),
+      });
       setTodos((prev) => [created, ...prev]);
       setNewTitle('');
+      setNewBody('');
+      setNewDescription('');
+      setNewSubtasksText('');
     } catch (e) {
       setActionError(e?.message || 'Failed to create todo');
     } finally {
@@ -194,55 +213,70 @@ export default function App() {
   if (!user) {
     return (
       <div className="container">
-        <h1>Todo App</h1>
-        <h2 style={{ marginTop: 0 }}>{authMode === 'login' ? 'Login' : 'Sign up'}</h2>
-        <form onSubmit={submitAuth} style={{ display: 'grid', gap: 10 }}>
-          <input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            disabled={authSubmitting}
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            disabled={authSubmitting}
-          />
-          {authMode === 'signup' ? (
-            <select
-              value={signupRole}
-              onChange={(e) => setSignupRole(e.target.value)}
+        <header className="app-header">
+          <h1>TaskTide</h1>
+          <p className="subtitle">Plan your day with a clean, focused workflow.</p>
+        </header>
+        <section className="auth-card">
+          <h2 className="section-title">{authMode === 'login' ? 'Welcome back' : 'Create your account'}</h2>
+          <form className="auth-form" onSubmit={submitAuth}>
+            <label className="field-label">
+              <span>Username</span>
+              <input
+                type="text"
+                placeholder="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                disabled={authSubmitting}
+              />
+            </label>
+            <label className="field-label">
+              <span>Password</span>
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={authSubmitting}
+              />
+            </label>
+            {authMode === 'signup' ? (
+              <label className="field-label">
+                <span>Role</span>
+                <select
+                  value={signupRole}
+                  onChange={(e) => setSignupRole(e.target.value)}
+                  disabled={authSubmitting}
+                  aria-label="Signup role"
+                >
+                  <option value="user">User</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </label>
+            ) : null}
+            <button className="btn btn-primary btn-block" type="submit" disabled={authSubmitting}>
+              {authSubmitting ? 'Please wait...' : authMode === 'login' ? 'Login' : 'Create account'}
+            </button>
+          </form>
+          {authError ? <p className="error">Error: {authError}</p> : null}
+          <p className="auth-switch-text">
+            {authMode === 'login' ? "Don't have an account?" : 'Already have an account?'}{' '}
+            <button
+              className="btn btn-link"
+              type="button"
+              onClick={() => {
+                setAuthError(null);
+                setAuthMode((prev) => (prev === 'login' ? 'signup' : 'login'));
+              }}
               disabled={authSubmitting}
-              aria-label="Signup role"
             >
-              <option value="user">User</option>
-              <option value="admin">Admin</option>
-            </select>
-          ) : null}
-          <button type="submit" disabled={authSubmitting}>
-            {authSubmitting ? 'Please wait...' : authMode === 'login' ? 'Login' : 'Create account'}
-          </button>
-        </form>
-        {authError ? <p className="error" style={{ marginTop: 12 }}>Error: {authError}</p> : null}
-        <p style={{ marginTop: 12 }}>
-          {authMode === 'login' ? "Don't have an account?" : 'Already have an account?'}{' '}
-          <button
-            type="button"
-            onClick={() => {
-              setAuthError(null);
-              setAuthMode((prev) => (prev === 'login' ? 'signup' : 'login'));
-            }}
-            disabled={authSubmitting}
-          >
-            {authMode === 'login' ? 'Sign up' : 'Login'}
-          </button>
-        </p>
-        <p style={{ color: '#666', fontSize: 13 }}>
-          Seed users: <code>admin / admin123</code>, <code>user / user123</code>
-        </p>
+              {authMode === 'login' ? 'Sign up' : 'Login'}
+            </button>
+          </p>
+          {/* <p className="seed-users">
+            Seed users: <code>admin / admin123</code>, <code>user / user123</code>
+          </p> */}
+        </section>
       </div>
     );
   }
@@ -252,31 +286,64 @@ export default function App() {
 
   return (
     <div className="container">
-      <h1>Todo App</h1>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
-        <p style={{ margin: 0 }}>
-          Signed in as <strong>{user.username}</strong> ({user.role})
-        </p>
-        <button type="button" onClick={handleLogout}>Logout</button>
-      </div>
+      <header className="app-header app-header-row">
+        <div>
+          <h1>TaskTide</h1>
+          <p className="subtitle">
+            Signed in as <strong>{user.username}</strong> ({user.role})
+          </p>
+        </div>
+        <button className="btn btn-muted" type="button" onClick={handleLogout}>Logout</button>
+      </header>
 
       <div className="create-section">
         <form
+          className="create-form create-form-extended"
           onSubmit={(e) => {
             e.preventDefault();
-            handleCreate(newTitle);
+            handleCreate({
+              title: newTitle,
+              body: newBody,
+              description: newDescription,
+              subtasksText: newSubtasksText,
+            });
           }}
-          style={{ display: 'flex', gap: 8, width: '100%' }}
         >
-          <input
-            type="text"
-            placeholder="Add a todo..."
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            disabled={isCreating}
-            aria-label="New todo title"
-          />
-          <button type="submit" disabled={isCreating}>
+          <div className="create-fields">
+            <input
+              type="text"
+              placeholder="Add a todo title..."
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              disabled={isCreating}
+              aria-label="New todo title"
+            />
+            <input
+              type="text"
+              placeholder="Body (optional)"
+              value={newBody}
+              onChange={(e) => setNewBody(e.target.value)}
+              disabled={isCreating}
+              aria-label="New todo body"
+            />
+            <input
+              type="text"
+              placeholder="Description (optional)"
+              value={newDescription}
+              onChange={(e) => setNewDescription(e.target.value)}
+              disabled={isCreating}
+              aria-label="New todo description"
+            />
+            <textarea
+              placeholder="Subtasks (one per line)"
+              value={newSubtasksText}
+              onChange={(e) => setNewSubtasksText(e.target.value)}
+              disabled={isCreating}
+              aria-label="New todo subtasks"
+              rows={3}
+            />
+          </div>
+          <button className="btn btn-primary" type="submit" disabled={isCreating}>
             {isCreating ? 'Adding...' : 'Add'}
           </button>
         </form>

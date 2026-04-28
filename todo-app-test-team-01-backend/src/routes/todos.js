@@ -22,6 +22,35 @@ function normalizeAndValidateTitle(title) {
   return { ok: true, value: trimmed };
 }
 
+function normalizeOptionalText(value, field) {
+  if (value === undefined) return { ok: true, value: undefined };
+  if (typeof value !== 'string') return { ok: false, error: `${field} must be a string` };
+  if (value.length > 1000) return { ok: false, error: `${field} must be at most 1000 characters` };
+  return { ok: true, value: value.trim() };
+}
+
+function normalizeAndValidateSubtasks(subtasks) {
+  if (subtasks === undefined) return { ok: true, value: undefined };
+  if (!Array.isArray(subtasks)) return { ok: false, error: 'Subtasks must be an array' };
+
+  const normalized = [];
+  for (const [index, subtask] of subtasks.entries()) {
+    if (!subtask || typeof subtask !== 'object') {
+      return { ok: false, error: `Subtask #${index + 1} is invalid` };
+    }
+    const text = String(subtask.text || '').trim();
+    if (text.length < 1 || text.length > 200) {
+      return { ok: false, error: `Subtask #${index + 1} text must be 1–200 characters` };
+    }
+    normalized.push({
+      id: Number.isInteger(subtask.id) ? subtask.id : index + 1,
+      text,
+      completed: Boolean(subtask.completed),
+    });
+  }
+  return { ok: true, value: normalized };
+}
+
 // ============================================================
 // GET /todos — List all todos
 // ✅ Already implemented as a reference pattern
@@ -35,13 +64,25 @@ router.get('/', (req, res) => {
 // POST /todos — Create a new todo
 // ============================================================
 router.post('/', (req, res) => {
-  const { title } = req.body || {};
-  const validated = normalizeAndValidateTitle(title);
-  if (!validated.ok) {
-    return res.status(400).json({ error: validated.error });
-  }
+  const { title, body, description, subtasks } = req.body || {};
 
-  const created = store.create(validated.value);
+  const validatedTitle = normalizeAndValidateTitle(title);
+  if (!validatedTitle.ok) {
+    return res.status(400).json({ error: validatedTitle.error });
+  }
+  const validatedBody = normalizeOptionalText(body, 'Body');
+  if (!validatedBody.ok) return res.status(400).json({ error: validatedBody.error });
+  const validatedDescription = normalizeOptionalText(description, 'Description');
+  if (!validatedDescription.ok) return res.status(400).json({ error: validatedDescription.error });
+  const validatedSubtasks = normalizeAndValidateSubtasks(subtasks);
+  if (!validatedSubtasks.ok) return res.status(400).json({ error: validatedSubtasks.error });
+
+  const created = store.create({
+    title: validatedTitle.value,
+    body: validatedBody.value || '',
+    description: validatedDescription.value || '',
+    subtasks: validatedSubtasks.value || [],
+  });
   return res.status(201).json(created);
 });
 
@@ -53,7 +94,7 @@ router.patch('/:id', (req, res) => {
   if (!id) return res.status(400).json({ error: 'Invalid id' });
 
   const body = req.body || {};
-  const allowedKeys = new Set(['title', 'completed']);
+  const allowedKeys = new Set(['title', 'body', 'description', 'subtasks', 'completed']);
   const keys = Object.keys(body);
   if (keys.length === 0) {
     return res.status(400).json({ error: 'No updates provided' });
@@ -79,6 +120,24 @@ router.patch('/:id', (req, res) => {
       return res.status(400).json({ error: 'Completed must be a boolean' });
     }
     updates.completed = body.completed;
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, 'body')) {
+    const validated = normalizeOptionalText(body.body, 'Body');
+    if (!validated.ok) return res.status(400).json({ error: validated.error });
+    updates.body = validated.value || '';
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, 'description')) {
+    const validated = normalizeOptionalText(body.description, 'Description');
+    if (!validated.ok) return res.status(400).json({ error: validated.error });
+    updates.description = validated.value || '';
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, 'subtasks')) {
+    const validated = normalizeAndValidateSubtasks(body.subtasks);
+    if (!validated.ok) return res.status(400).json({ error: validated.error });
+    updates.subtasks = validated.value;
   }
 
   if (Object.keys(updates).length === 0) {

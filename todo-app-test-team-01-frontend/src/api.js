@@ -44,11 +44,11 @@ async function readErrorMessage(res, fallback) {
 // 🔨 TODO: Implement this — call POST /todos with the title
 // Should return the created todo
 // ============================================================
-export async function createTodo(title) {
+export async function createTodo(payload) {
   const res = await fetch(`${API_BASE}/todos`, {
     method: 'POST',
     headers: getAuthHeaders(true),
-    body: JSON.stringify({ title }),
+    body: JSON.stringify(payload),
   });
 
   if (!res.ok) {
