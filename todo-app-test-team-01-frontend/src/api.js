@@ -14,13 +14,34 @@ export async function fetchTodos() {
   return res.json();
 }
 
+async function readErrorMessage(res, fallback) {
+  try {
+    const data = await res.json();
+    if (data && typeof data.error === 'string' && data.error.trim()) {
+      return data.error;
+    }
+  } catch {
+    // ignore JSON parsing errors
+  }
+  return fallback;
+}
+
 // ============================================================
 // 🔨 TODO: Implement this — call POST /todos with the title
 // Should return the created todo
 // ============================================================
 export async function createTodo(title) {
-  // TODO: implement
-  throw new Error('createTodo not implemented');
+  const res = await fetch(`${API_BASE}/todos`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title }),
+  });
+
+  if (!res.ok) {
+    throw new Error(await readErrorMessage(res, 'Failed to create todo'));
+  }
+
+  return res.json();
 }
 
 // ============================================================
@@ -29,8 +50,17 @@ export async function createTodo(title) {
 // Should return the updated todo
 // ============================================================
 export async function updateTodo(id, updates) {
-  // TODO: implement
-  throw new Error('updateTodo not implemented');
+  const res = await fetch(`${API_BASE}/todos/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updates),
+  });
+
+  if (!res.ok) {
+    throw new Error(await readErrorMessage(res, 'Failed to update todo'));
+  }
+
+  return res.json();
 }
 
 // ============================================================
@@ -38,6 +68,11 @@ export async function updateTodo(id, updates) {
 // Returns nothing on success
 // ============================================================
 export async function deleteTodo(id) {
-  // TODO: implement
-  throw new Error('deleteTodo not implemented');
+  const res = await fetch(`${API_BASE}/todos/${id}`, {
+    method: 'DELETE',
+  });
+
+  if (!res.ok) {
+    throw new Error(await readErrorMessage(res, 'Failed to delete todo'));
+  }
 }
