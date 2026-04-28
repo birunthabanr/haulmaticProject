@@ -1,7 +1,7 @@
 // API client for talking to the backend.
 // One method is already implemented as a reference pattern.
 
-const API_BASE = 'http://localhost:3001';
+const API_BASE = 'http://localhost:3003';
 
 // ============================================================
 // ✅ Already implemented as a reference pattern

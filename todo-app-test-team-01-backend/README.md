@@ -54,6 +54,15 @@ Validation must be enforced on **both** the frontend and the backend. Empty titl
 - Frontend: list rendering, loading/error states, all CSS (including the `.completed` style)
 - An API client pattern for you to follow
 
+## Auth Endpoints Added
+
+The backend also now exposes:
+
+- `POST /api/v1/auth/register`
+- `POST /api/v1/auth/login`
+
+Both endpoints accept JSON bodies with `email` and `password`, returning a user object plus a session token on success.
+
 ## What We're Looking For
 
 We're not just looking for "does it work" — we're looking at:
